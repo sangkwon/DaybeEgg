@@ -8,10 +8,8 @@ import android.opengl.GLES10;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
 import android.opengl.GLUtils;
-import android.util.Log;
 import android.view.MotionEvent;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -25,9 +23,7 @@ public class EggView extends GLSurfaceView {
 	EggRenderer mRenderer;
 	Context mContext;
 	int[] PROFILES = {
-			R.drawable.nw_thumbnail_big_test, R.drawable.nw_thumbnail_small_test
-			, R.drawable.nw_thumbnail_big_test, R.drawable.nw_thumbnail_small_test
-			, R.drawable.nw_thumbnail_big_test, R.drawable.nw_thumbnail_small_test
+			R.drawable.img8bit, R.drawable.img8bit, R.drawable.img8bit
 	};
 	int OBJECT_COUNT = PROFILES.length;
 
@@ -50,9 +46,6 @@ public class EggView extends GLSurfaceView {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		Log.e("EGG",
-				event.getAction() + "\t" + event.getActionMasked() + "\t" + event.getActionIndex() + " => \t" + event.getX() + ",\t" + event.getY());
-
 		switch (event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
 				downX = event.getX();
@@ -134,7 +127,7 @@ public class EggView extends GLSurfaceView {
 			glMatrixMode(GL_MODELVIEW);
 
 			drawGrid();
-			drawAxis();
+			//drawAxis();
 
 			drawPlanes();
 		}
@@ -173,16 +166,19 @@ public class EggView extends GLSurfaceView {
 		float[] mY = new float[OBJECT_COUNT];
 		float[] mZ = new float[OBJECT_COUNT];
 		float[] mAngularVelocity = new float[OBJECT_COUNT];
+		float[] mScale = new float[OBJECT_COUNT];
 
 		private void init() {
 			Random rand = new Random();
-			float c = (float) OBJECT_COUNT;
+			float c = 7.0f;
 			for (int i = 0; i < OBJECT_COUNT; i++) {
-				mX[i] = rand.nextInt(OBJECT_COUNT) - c / 2;
+				mX[i] = rand.nextFloat() * c - c / 2;
 				mY[i] = 1f; // rand.nextInt(OBJECT_COUNT) - c/2;
-				mZ[i] = rand.nextInt(OBJECT_COUNT) - c / 2;
+				mZ[i] = rand.nextFloat() * c - c / 2;
 
-				mAngularVelocity[i] = rand.nextFloat() * 3;
+				mScale[i] = rand.nextFloat() + 1.0f;
+
+				mAngularVelocity[i] = 0f; //rand.nextFloat() * .5f;
 			}
 		}
 
@@ -256,15 +252,56 @@ public class EggView extends GLSurfaceView {
 			glDisableClientState(GL_COLOR_ARRAY);
 		}
 
+		long mTimeStart = 0;
+		long mTime = 0;
+
+		private long getTimeElapsed() {
+			mTime = System.currentTimeMillis();
+
+			if (mTimeStart == 0) {
+				mTimeStart = mTime;
+			}
+
+			return mTime - mTimeStart;
+		}
+
 		private void drawPlanes() {
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, 0);
+
+			long time = getTimeElapsed();
+
+			float timeJ = time % 500;
+			float height = 0;
+			if (timeJ < 250f) {
+				height = timeJ / 250f;
+			} else {
+				height = (500f - timeJ) / 250f;
+			}
+			height = (float) Math.sin(height / 2 * Math.PI);
+
+			float angle = 0;
+			long timeA = (time / 1000) % 4;
+			if (timeA == 0) {
+				angle = 30;
+			} else if (timeA == 2) {
+				angle = -30;
+			}
+
 			for (int i = 0; i < OBJECT_COUNT; i++) {
 				mAngles[i] += mAngularVelocity[i];
 
+				float y = mY[i] + height;
+
 				glLoadIdentity();
-				glTranslatef(mX[i], mY[i], mZ[i]);
+				glScalef(mScale[i], mScale[i], 1);
+				glTranslatef(mX[i], y, mZ[i]);
 				glRotatef(mAngles[i], 0, 1, 0);
+				glRotatef(angle, 0, 0, 1);
 				drawPlane(textures[i], fbTexPlane, fbVtxPlane);
 			}
+
+			glDisable(GL_ALPHA_TEST);
 		}
 
 		private void drawPlane(int textureId, FloatBuffer fbTexPlane, FloatBuffer fbVtxPlane) {
@@ -278,8 +315,8 @@ public class EggView extends GLSurfaceView {
 		}
 
 		public float lookAngleH = (float) Math.PI / 4;
-		public float lookAngleV = (float) Math.PI / 4;
-		public float lookRadius = (float) OBJECT_COUNT * 2.5f;
+		public float lookAngleV = (float) Math.PI / 8;
+		public float lookRadius = 20;
 
 		private float oldLookAngleH = -1, oldLookAngleV = -1, oldLookRadius = -1;
 
@@ -293,7 +330,7 @@ public class EggView extends GLSurfaceView {
 				glMatrixMode(GL10.GL_PROJECTION);
 				glLoadIdentity();
 
-				GLU.gluPerspective(gl, 45, (float) mWidth / mHeight, 1, 100);	// 45는 시야각
+				GLU.gluPerspective(gl, 45, (float) mWidth / mHeight, 1, 100);
 				float lookX = (float) (Math.cos(lookAngleH) * Math.cos(lookAngleV)) * lookRadius;
 				float lookY = (float) (Math.sin(lookAngleV)) * lookRadius;
 				float lookZ = (float) (Math.sin(lookAngleH) * Math.cos(lookAngleV)) * lookRadius;
