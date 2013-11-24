@@ -24,6 +24,7 @@ public class EggView extends GLSurfaceView {
 	Context mContext;
 	int[] PROFILES = {
 			R.drawable.img8bit, R.drawable.img8bit, R.drawable.img8bit
+			,R.drawable.img8bit, R.drawable.img8bit, R.drawable.img8bit
 	};
 	int OBJECT_COUNT = PROFILES.length;
 
@@ -127,7 +128,7 @@ public class EggView extends GLSurfaceView {
 			glMatrixMode(GL_MODELVIEW);
 
 			drawGrid();
-			//drawAxis();
+			drawAxis();
 
 			drawPlanes();
 		}
@@ -281,11 +282,11 @@ public class EggView extends GLSurfaceView {
 			height = (float) Math.sin(height / 2 * Math.PI);
 
 			float angle = 0;
-			long timeA = (time / 1000) % 4;
+			long timeA = ((time - 250 )/ 1000) % 4;
 			if (timeA == 0) {
-				angle = 30;
+				angle = 20;
 			} else if (timeA == 2) {
-				angle = -30;
+				angle = -20;
 			}
 
 			for (int i = 0; i < OBJECT_COUNT; i++) {
