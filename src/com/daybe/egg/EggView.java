@@ -331,6 +331,10 @@ public class EggView extends GLSurfaceView {
 				glMatrixMode(GL10.GL_PROJECTION);
 				glLoadIdentity();
 
+				//FIXME 2D 로 만들려면 이 부분 수정해야 하는 것 같은데...
+//				glOrthof(0,mWidth,0,mHeight,1,-1);
+//				glLoadIdentity();
+				
 				GLU.gluPerspective(gl, 45, (float) mWidth / mHeight, 1, 100);
 				float lookX = (float) (Math.cos(lookAngleH) * Math.cos(lookAngleV)) * lookRadius;
 				float lookY = (float) (Math.sin(lookAngleV)) * lookRadius;
